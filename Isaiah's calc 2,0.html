@@ -1,0 +1,1080 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Isaiah's Multi-Mode Glass Calculator</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=VT323&family=Space+Mono:wght@400;700&family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        *, *::before, *::after {
+            box-sizing: border-box;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* DEFAULT THEME: CLASSIC (NOTHING OS GLASS) */
+        :root {
+            --bg-gradient: radial-gradient(circle at 50% 30%, #1c1d22 0%, #08090b 100%);
+            --glass-bg: rgba(20, 20, 20, 0.65);
+            --glass-border: rgba(255, 255, 255, 0.15);
+            --text-primary: #ffffff;
+            --accent-main: #d71921;
+            --accent-glow: rgba(215, 25, 33, 0.5);
+            --btn-bg: rgba(255, 255, 255, 0.05);
+            --btn-hover: rgba(255, 255, 255, 0.15);
+            --btn-active: rgba(215, 25, 33, 0.3);
+            --operator-color: #d71921;
+            --font-main: 'VT323', 'Space Mono', monospace;
+            --frame-radius: 2.5rem;
+            --frame-max-w: 28rem;
+            --frame-max-h: 880px;
+        }
+
+        /* THEME 1: MODERN HIGH-TECH */
+        body[data-theme="modern"] {
+            --bg-gradient: radial-gradient(circle at 50% 50%, #030712 0%, #000000 100%);
+            --glass-bg: rgba(15, 23, 42, 0.85);
+            --glass-border: rgba(56, 189, 248, 0.3);
+            --text-primary: #38bdf8;
+            --accent-main: #06b6d4;
+            --accent-glow: rgba(6, 182, 212, 0.8);
+            --btn-bg: rgba(30, 41, 59, 0.6);
+            --btn-hover: rgba(56, 189, 248, 0.2);
+            --btn-active: rgba(6, 182, 212, 0.4);
+            --operator-color: #38bdf8;
+            --font-main: 'Orbitron', sans-serif;
+            --frame-radius: 1.5rem;
+            --frame-max-w: 30rem;
+            --frame-max-h: 880px;
+        }
+
+        /* THEME 2: FULL SCREEN MODE */
+        body[data-theme="fullscreen"] {
+            --bg-gradient: #050505;
+            --glass-bg: rgba(10, 10, 10, 0.95);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --text-primary: #ffffff;
+            --accent-main: #e11d48;
+            --accent-glow: rgba(225, 29, 72, 0.6);
+            --btn-bg: rgba(255, 255, 255, 0.04);
+            --btn-hover: rgba(255, 255, 255, 0.12);
+            --btn-active: rgba(225, 29, 72, 0.3);
+            --operator-color: #f43f5e;
+            --font-main: 'Space Mono', monospace;
+            --frame-radius: 0px;
+            --frame-max-w: 100vw;
+            --frame-max-h: 100vh;
+        }
+
+        body {
+            background: var(--bg-gradient);
+            color: var(--text-primary);
+            font-family: var(--font-main);
+            transition: all 0.3s ease;
+        }
+
+        .calc-font {
+            font-family: var(--font-main);
+        }
+
+        /* WRAPPER FRAME */
+        #calcWrapper {
+            max-width: var(--frame-max-w);
+            max-height: var(--frame-max-h);
+            border-radius: var(--frame-radius);
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .glass-panel {
+            background: var(--glass-bg);
+            backdrop-filter: blur(28px) saturate(180%);
+            -webkit-backdrop-filter: blur(28px) saturate(180%);
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+            position: relative;
+        }
+
+        .glass-btn {
+            background: var(--btn-bg);
+            border: 1px solid var(--glass-border);
+            color: var(--text-primary);
+            font-family: var(--font-main);
+            transition: transform 0.1s ease, background-color 0.12s ease, border-color 0.12s ease;
+            user-select: none;
+        }
+
+        .glass-btn:hover {
+            background: var(--btn-hover);
+            border-color: var(--accent-main);
+            transform: translateY(-1px);
+        }
+
+        .glass-btn:active, .glass-btn.active-press {
+            background: var(--btn-active);
+            transform: scale(0.95);
+            border-color: var(--accent-main);
+        }
+
+        .icon-btn.active {
+            background: var(--accent-main);
+            color: #fff;
+            border-color: var(--accent-main);
+        }
+
+        .led-dot {
+            width: 8px;
+            height: 8px;
+            background-color: var(--accent-main);
+            border-radius: 50%;
+            box-shadow: 0 0 8px var(--accent-glow);
+        }
+
+        .glyph-bg {
+            position: absolute;
+            top: -40px;
+            right: -40px;
+            width: 220px;
+            height: 220px;
+            background: radial-gradient(circle, var(--accent-glow) 0%, transparent 70%);
+            opacity: 0.5;
+            pointer-events: none;
+            transition: transform 0.15s ease, opacity 0.3s ease;
+        }
+
+        #particleCanvas {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            z-index: 20;
+        }
+
+        #advDrawer {
+            transition: max-height 0.3s ease, opacity 0.25s ease, margin 0.25s ease;
+        }
+
+        /* LANDSCAPE SCREEN LAYOUT */
+        @media (orientation: landscape) {
+            #calcWrapper {
+                max-width: 95vw !important;
+                max-height: 94vh !important;
+                flex-direction: row !important;
+                gap: 16px;
+            }
+
+            .landscape-left-col {
+                width: 42%;
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+            }
+
+            .landscape-right-col {
+                width: 58%;
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+            }
+
+            .display-panel-wrap {
+                height: 100% !important;
+                min-height: 100% !important;
+            }
+        }
+
+        /* MODAL POPUPS */
+        .theme-modal, .frac-modal {
+            position: absolute;
+            inset: 0;
+            background: rgba(10, 10, 10, 0.95);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border-radius: var(--frame-radius);
+            z-index: 50;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            overflow-y: auto;
+        }
+
+        .theme-modal.open, .frac-modal.open {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        ::-webkit-scrollbar { display: none; }
+        * { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* RESULT CONTAINER */
+        #resultContainer {
+            min-height: 2.8rem;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-bottom: 4px;
+        }
+
+        #liveResult {
+            line-height: 1.1;
+            padding-bottom: 2px;
+            word-break: break-all;
+            white-space: nowrap;
+        }
+
+        /* TOP-OVER-BOTTOM FRACTION STYLING */
+        .frac-stacked {
+            display: inline-flex;
+            flex-direction: column;
+            vertical-align: middle;
+            text-align: center;
+            font-size: 0.85em;
+            padding: 0 4px;
+        }
+        .frac-stacked .num {
+            border-bottom: 2px solid currentColor;
+            padding-bottom: 1px;
+        }
+        .frac-stacked .den {
+            padding-top: 1px;
+        }
+    </style>
+</head>
+<body class="w-screen h-screen m-0 p-0 overflow-hidden flex items-center justify-center select-none" data-theme="classic">
+
+    <div id="calcWrapper" class="w-full h-full p-3 sm:p-5 flex flex-col justify-between glass-panel relative z-10 my-auto overflow-hidden">
+        <div class="glyph-bg" id="glyphGlow"></div>
+
+        <!-- LANDSCAPE / PORTRAIT COMPATIBLE CONTAINER -->
+        <div class="landscape-left-col flex flex-col justify-between grow">
+            <!-- HEADER TOOLBAR -->
+            <div class="flex items-center justify-between pb-2 border-b border-white/10 shrink-0 z-10 mb-2">
+                <div class="flex items-center gap-2">
+                    <div class="led-dot animate-pulse"></div>
+                    <span class="calc-font text-sm sm:text-base tracking-widest uppercase opacity-90" id="brandText">CLASSIC GLASS</span>
+                </div>
+                
+                <div class="flex items-center gap-1 sm:gap-1.5">
+                    <button id="abcToggle" onclick="toggleAbcMode()" class="px-2 py-1 rounded-full glass-btn calc-font text-xs tracking-wider">ABC</button>
+                    <button id="advToggleBtn" onclick="toggleAdvMode()" class="px-2 py-1 rounded-full glass-btn calc-font text-xs tracking-wider">ADV</button>
+                    <button id="builderBtn" onclick="toggleThemeModal()" class="w-7 h-7 sm:w-8 sm:h-8 rounded-full glass-btn flex items-center justify-center text-xs" title="Theme Builder">
+                        <i class="fa-solid fa-palette"></i>
+                    </button>
+                    <button id="soundToggleBtn" onclick="toggleAudio()" class="w-7 h-7 sm:w-8 sm:h-8 rounded-full glass-btn flex items-center justify-center text-xs">
+                        <i class="fa-solid fa-volume-high" id="soundIcon"></i>
+                    </button>
+                    <button onclick="toggleHistoryDrawer()" class="w-7 h-7 sm:w-8 sm:h-8 rounded-full glass-btn flex items-center justify-center text-xs">
+                        <i class="fa-solid fa-clock-rotate-left"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- DISPLAY PANEL -->
+            <div id="displayArea" class="display-panel-wrap glass-panel rounded-2xl p-3 sm:p-4 my-1 flex flex-col justify-between min-h-[150px] sm:min-h-[170px] grow shrink-0 relative overflow-hidden z-10">
+                <canvas id="particleCanvas"></canvas>
+
+                <div class="flex justify-between items-center text-[11px] calc-font tracking-widest opacity-60 mb-1 z-10">
+                    <div class="flex items-center gap-2">
+                        <span id="angleUnitBtn" onclick="toggleAngleUnit()" class="cursor-pointer hover:underline uppercase bg-white/10 px-2 py-0.5 rounded-md">DEG</span>
+                        <span id="statusBadge" class="bg-white/10 px-2 py-0.5 rounded-md">RAW INPUT</span>
+                    </div>
+                    <span class="tracking-widest">NOTHING_ENGINE</span>
+                </div>
+
+                <!-- Input Display -->
+                <div class="relative flex items-center overflow-x-auto py-1 my-auto z-10">
+                    <input type="text" id="calcInput" placeholder="0" class="w-full bg-transparent calc-font text-2xl sm:text-4xl outline-none tracking-wider text-right" autocomplete="off" spellcheck="false" readonly>
+                </div>
+
+                <!-- Evaluation Bar -->
+                <div class="flex items-center justify-between pt-2 pb-2 border-t border-white/10 shrink-0 z-10 gap-2">
+                    <button onclick="copyToClipboard()" class="text-xs calc-font opacity-50 hover:opacity-100 transition-opacity flex items-center gap-1 bg-white/5 px-2 py-1 rounded-lg shrink-0">
+                        <i class="fa-regular fa-copy"></i>
+                        <span id="copyNotice">COPY</span>
+                    </button>
+                    <div id="resultContainer" class="flex items-center justify-end overflow-hidden w-full pl-2">
+                        <div id="liveResult" class="calc-font font-bold text-right leading-none flex items-center gap-1" style="color: var(--accent-main);">= 0</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="landscape-right-col flex flex-col justify-between grow">
+            <!-- ADVANCED DRAWER -->
+            <div id="advDrawer" class="max-h-0 opacity-0 overflow-hidden grid grid-cols-4 gap-1.5 sm:gap-2 mb-1 shrink-0 z-10">
+                <button onclick="handleKey('sin(')" class="glass-btn p-2 rounded-xl calc-font text-sm flex items-center justify-center">sin</button>
+                <button onclick="handleKey('cos(')" class="glass-btn p-2 rounded-xl calc-font text-sm flex items-center justify-center">cos</button>
+                <button onclick="handleKey('tan(')" class="glass-btn p-2 rounded-xl calc-font text-sm flex items-center justify-center">tan</button>
+                <button onclick="handleKey('sqrt(')" class="glass-btn p-2 rounded-xl calc-font text-sm flex items-center justify-center">√</button>
+                <button onclick="handleKey('^')" class="glass-btn p-2 rounded-xl calc-font text-sm flex items-center justify-center">xʸ</button>
+                <button onclick="handleKey('pi')" class="glass-btn p-2 rounded-xl calc-font text-sm flex items-center justify-center">π</button>
+                <button onclick="handleKey('!')" class="glass-btn p-2 rounded-xl calc-font text-sm flex items-center justify-center">n!</button>
+                <!-- FRACTION INPUT BUTTON -->
+                <button onclick="openFractionModal()" class="glass-btn p-2 rounded-xl calc-font text-xs flex items-center justify-center text-cyan-400 font-bold">a/b</button>
+            </div>
+
+            <!-- MAIN KEYPAD GRID -->
+            <div class="grid grid-cols-4 gap-1.5 sm:gap-2.5 shrink-0 grow justify-center my-auto z-10">
+                <button onclick="handleKey('AC')" class="glass-btn p-2.5 sm:p-3.5 rounded-2xl calc-font text-base sm:text-lg font-bold text-red-400 flex items-center justify-center">CLEAR</button>
+                <button onclick="undo()" id="gridUndoBtn" class="glass-btn p-2.5 sm:p-3.5 rounded-2xl calc-font text-xs sm:text-sm font-bold flex items-center justify-center gap-1">UNDO</button>
+                <!-- FRACTION KEY ON MAIN GRID -->
+                <button onclick="openFractionModal()" class="glass-btn p-2.5 sm:p-3.5 rounded-2xl calc-font text-sm sm:text-base font-bold text-cyan-400 flex items-center justify-center" title="Insert Fraction">/</button>
+                <button onclick="handleKey('÷')" class="glass-btn p-2.5 sm:p-3.5 rounded-2xl calc-font text-lg sm:text-2xl font-bold flex items-center justify-center" style="color: var(--operator-color);">÷</button>
+
+                <button onclick="handleKey('7')" class="glass-btn p-2.5 sm:p-3.5 rounded-2xl calc-font text-lg sm:text-2xl font-bold flex items-center justify-center">7</button>
+                <button onclick="handleKey('8')" class="glass-btn p-2.5 sm:p-3.5 rounded-2xl calc-font text-lg sm:text-2xl font-bold flex items-center justify-center">8</button>
+                <button onclick="handleKey('9')" class="glass-btn p-2.5 sm:p-3.5 rounded-2xl calc-font text-lg sm:text-2xl font-bold flex items-center justify-center">9</button>
+                <button onclick="handleKey('×')" class="glass-btn p-2.5 sm:p-3.5 rounded-2xl calc-font text-lg sm:text-2xl font-bold flex items-center justify-center" style="color: var(--operator-color);">×</button>
+
+                <button onclick="handleKey('4')" class="glass-btn p-2.5 sm:p-3.5 rounded-2xl calc-font text-lg sm:text-2xl font-bold flex items-center justify-center">4</button>
+                <button onclick="handleKey('5')" class="glass-btn p-2.5 sm:p-3.5 rounded-2xl calc-font text-lg sm:text-2xl font-bold flex items-center justify-center">5</button>
+                <button onclick="handleKey('6')" class="glass-btn p-2.5 sm:p-3.5 rounded-2xl calc-font text-lg sm:text-2xl font-bold flex items-center justify-center">6</button>
+                <button onclick="handleKey('-')" class="glass-btn p-2.5 sm:p-3.5 rounded-2xl calc-font text-lg sm:text-2xl font-bold flex items-center justify-center" style="color: var(--operator-color);">-</button>
+
+                <button onclick="handleKey('1')" class="glass-btn p-2.5 sm:p-3.5 rounded-2xl calc-font text-lg sm:text-2xl font-bold flex items-center justify-center">1</button>
+                <button onclick="handleKey('2')" class="glass-btn p-2.5 sm:p-3.5 rounded-2xl calc-font text-lg sm:text-2xl font-bold flex items-center justify-center">2</button>
+                <button onclick="handleKey('3')" class="glass-btn p-2.5 sm:p-3.5 rounded-2xl calc-font text-lg sm:text-2xl font-bold flex items-center justify-center">3</button>
+                <button onclick="handleKey('+')" class="glass-btn p-2.5 sm:p-3.5 rounded-2xl calc-font text-lg sm:text-2xl font-bold flex items-center justify-center" style="color: var(--operator-color);">+</button>
+
+                <button onclick="handleKey('0')" class="glass-btn p-2.5 sm:p-3.5 rounded-2xl calc-font text-lg sm:text-2xl font-bold flex items-center justify-center">0</button>
+                <button onclick="handleKey('.')" class="glass-btn p-2.5 sm:p-3.5 rounded-2xl calc-font text-lg sm:text-2xl font-bold flex items-center justify-center">.</button>
+                <button onclick="handleKey('=')" class="glass-btn p-2.5 sm:p-3.5 rounded-2xl calc-font text-lg sm:text-2xl font-bold flex items-center justify-center" style="color: var(--operator-color);">=</button>
+                <button onclick="evaluateExpression()" class="glass-btn p-2.5 sm:p-3.5 rounded-2xl calc-font text-xl sm:text-2xl font-bold text-white flex items-center justify-center shadow-xl" style="background: var(--accent-main);">=</button>
+            </div>
+        </div>
+
+        <!-- FRACTION CHOICE POPUP MODAL -->
+        <div class="frac-modal" id="fracModal">
+            <div class="flex justify-between items-center text-sm calc-font font-bold pb-1 border-b border-white/10">
+                <span>SELECT FRACTION FORMAT</span>
+                <button onclick="closeFractionModal()" class="w-6 h-6 rounded-full glass-btn flex items-center justify-center text-xs">✕</button>
+            </div>
+            
+            <p class="text-xs calc-font opacity-70">How would you like fractions to display?</p>
+
+            <div class="grid grid-cols-2 gap-3 my-auto">
+                <button onclick="confirmFractionStyle('side')" class="p-4 rounded-2xl glass-btn flex flex-col items-center justify-center gap-2 text-center hover:border-cyan-400">
+                    <span class="text-xl font-bold text-cyan-400">A / B</span>
+                    <span class="text-[11px] opacity-70">Side-by-Side</span>
+                </button>
+
+                <button onclick="confirmFractionStyle('stacked')" class="p-4 rounded-2xl glass-btn flex flex-col items-center justify-center gap-2 text-center hover:border-cyan-400">
+                    <div class="flex flex-col items-center text-cyan-400 font-bold leading-tight text-sm">
+                        <span class="border-b border-cyan-400 px-1">A</span>
+                        <span>B</span>
+                    </div>
+                    <span class="text-[11px] opacity-70">Top on Bottom</span>
+                </button>
+            </div>
+
+            <button onclick="closeFractionModal()" class="py-2.5 rounded-xl calc-font text-xs font-bold bg-white/10 hover:bg-white/20">CANCEL</button>
+        </div>
+
+        <!-- THEME & FX BUILDER MODAL -->
+        <div class="theme-modal" id="themeModal">
+            <div class="flex justify-between items-center text-sm calc-font font-bold pb-1 border-b border-white/10">
+                <span>THEME & FX BUILDER</span>
+                <button onclick="toggleThemeModal()" class="w-6 h-6 rounded-full glass-btn flex items-center justify-center text-xs">✕</button>
+            </div>
+
+            <!-- MAIN CALCULATOR STYLE PRESETS -->
+            <div class="flex flex-col gap-1 text-xs">
+                <label class="calc-font opacity-60">CALCULATOR THEME PRESETS</label>
+                <select id="mainThemeSelect" onchange="switchMainTheme(this.value)" class="bg-white/10 border border-white/20 rounded-xl p-2 calc-font outline-none text-white cursor-pointer">
+                    <option value="classic" class="bg-neutral-900">1. Classic (Nothing OS Glass)</option>
+                    <option value="modern" class="bg-neutral-900">2. Modern High-Tech Sci-Fi</option>
+                    <option value="fullscreen" class="bg-neutral-900">3. Full Screen Canvas</option>
+                </select>
+            </div>
+
+            <!-- 21 TYPING EFFECTS SELECTOR -->
+            <div class="flex flex-col gap-1 text-xs">
+                <label class="calc-font opacity-60">TYPING EFFECT (21 FX)</label>
+                <select id="effectSelect" onchange="setEffectPreset(this.value)" class="bg-white/10 border border-white/20 rounded-xl p-2 calc-font outline-none text-white cursor-pointer">
+                    <option value="fireworks" class="bg-neutral-900">1. Fireworks Burst</option>
+                    <option value="assembly" class="bg-neutral-900">2. Particle Assembly</option>
+                    <option value="matrix" class="bg-neutral-900">3. Matrix Rain</option>
+                    <option value="pulsar" class="bg-neutral-900">4. Neon Pulsar Rings</option>
+                    <option value="grid" class="bg-neutral-900">5. Cyber Laser Grid</option>
+                    <option value="glyphWave" class="bg-neutral-900">6. Glyph Sine Waves</option>
+                    <option value="strobe" class="bg-neutral-900">7. Strobe Flash</option>
+                    <option value="confetti" class="bg-neutral-900">8. Confetti Rain</option>
+                    <option value="shockwave" class="bg-neutral-900">9. Radial Shockwave Ring</option>
+                    <option value="bubbles" class="bg-neutral-900">10. Rising Bubbles</option>
+                    <option value="glitch" class="bg-neutral-900">11. Cyber Glitch Blocks</option>
+                    <option value="vortex" class="bg-neutral-900">12. Spiral Vortex Swirl</option>
+                    <option value="fireflies" class="bg-neutral-900">13. Glowing Fireflies</option>
+                    <option value="quantum" class="bg-neutral-900">14. Quantum Dust Cloud</option>
+                    <option value="digitalRain" class="bg-neutral-900">15. Digital Code Stream</option>
+                    <option value="hyperdrive" class="bg-neutral-900">16. Starfield Hyperdrive</option>
+                    <option value="plasma" class="bg-neutral-900">17. Plasma Flare Burst</option>
+                    <option value="echo" class="bg-neutral-900">18. Echo Wave Expansion</option>
+                    <option value="dotMatrix" class="bg-neutral-900">19. Dot Matrix Grid Blast</option>
+                    <option value="nebula" class="bg-neutral-900">20. Cosmic Nebula Dust</option>
+                    <option value="prism" class="bg-neutral-900">21. Prism Rainbow Blast</option>
+                    <option value="none" class="bg-neutral-900">22. Off (Clean Mode)</option>
+                </select>
+            </div>
+
+            <!-- AUDIO PRESET SELECTOR -->
+            <div class="flex flex-col gap-1 text-xs">
+                <label class="calc-font opacity-60">AUDIO PRESETS (5 SOUNDS)</label>
+                <select id="soundPresetSelect" onchange="setSoundPreset(this.value)" class="bg-white/10 border border-white/20 rounded-xl p-2 calc-font outline-none text-white cursor-pointer">
+                    <option value="retro" class="bg-neutral-900">1. Retro Synthesizer</option>
+                    <option value="glyph" class="bg-neutral-900">2. Nothing Glyph Tones</option>
+                    <option value="cyber" class="bg-neutral-900">3. Cyber Click & Beep</option>
+                    <option value="arcade" class="bg-neutral-900">4. 8-Bit Arcade Bleeps</option>
+                    <option value="minimal" class="bg-neutral-900">5. Minimal Glass Tap</option>
+                </select>
+            </div>
+
+            <div class="flex flex-col gap-1 text-xs">
+                <label class="calc-font opacity-60">GOOGLE FONT NAME</label>
+                <input type="text" id="fontInput" placeholder="e.g. Orbitron, VT323, Space Mono" class="bg-white/10 border border-white/20 rounded-xl p-2 calc-font outline-none">
+            </div>
+
+            <div class="grid grid-cols-2 gap-2 text-xs">
+                <div class="flex items-center justify-between bg-white/5 p-2 rounded-xl border border-white/10">
+                    <span>BG COLOR</span>
+                    <input type="color" id="bgColorInput" value="#050505" class="w-6 h-6 border-none bg-transparent cursor-pointer">
+                </div>
+                <div class="flex items-center justify-between bg-white/5 p-2 rounded-xl border border-white/10">
+                    <span>ACCENT</span>
+                    <input type="color" id="accentColorInput" value="#d71921" class="w-6 h-6 border-none bg-transparent cursor-pointer">
+                </div>
+                <div class="flex items-center justify-between bg-white/5 p-2 rounded-xl border border-white/10">
+                    <span>TEXT COLOR</span>
+                    <input type="color" id="textColorInput" value="#ffffff" class="w-6 h-6 border-none bg-transparent cursor-pointer">
+                </div>
+                <div class="flex items-center justify-between bg-white/5 p-2 rounded-xl border border-white/10">
+                    <span>GLASS TINT</span>
+                    <input type="color" id="glassColorInput" value="#141414" class="w-6 h-6 border-none bg-transparent cursor-pointer">
+                </div>
+            </div>
+
+            <button onclick="applyCustomColors()" class="mt-auto py-2.5 rounded-xl calc-font text-xs font-bold text-white uppercase tracking-wider" style="background: var(--accent-main);">Save Custom Styles</button>
+        </div>
+    </div>
+
+    <!-- HISTORY DRAWER -->
+    <div id="historyDrawer" class="hidden fixed inset-0 bg-black/70 backdrop-blur-md z-50 flex justify-end">
+        <div class="w-full max-w-sm h-full glass-panel p-6 flex flex-col justify-between shadow-2xl">
+            <div>
+                <div class="flex items-center justify-between pb-4 border-b border-white/10 mb-4">
+                    <span class="calc-font text-sm uppercase tracking-widest flex items-center gap-2">
+                        <i class="fa-solid fa-clock-rotate-left"></i> History Log
+                    </span>
+                    <button onclick="toggleHistoryDrawer()" class="w-8 h-8 rounded-full glass-btn flex items-center justify-center text-xs">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+                <div id="historyList" class="space-y-2.5 max-h-[75vh] overflow-y-auto pr-1">
+                    <div class="text-xs calc-font opacity-40 italic text-center py-10">No history logged</div>
+                </div>
+            </div>
+            <button onclick="clearHistory()" class="w-full py-3 rounded-2xl glass-btn calc-font text-xs text-red-400 hover:bg-red-500/10">
+                CLEAR HISTORY
+            </button>
+        </div>
+    </div>
+
+    <script>
+        let angleUnit = 'DEG';
+        let audioEnabled = localStorage.getItem('nothing_calc_sound') !== 'false';
+        let isAdvOpen = false;
+        let allowLetters = false;
+        let selectedEffect = localStorage.getItem('nothing_calc_fx') || 'fireworks';
+        let selectedSoundPreset = localStorage.getItem('nothing_calc_sound_preset') || 'retro';
+        let mainTheme = localStorage.getItem('nothing_calc_main_theme') || 'classic';
+        let fractionStyle = localStorage.getItem('nothing_calc_frac_style') || 'side';
+        let history = JSON.parse(localStorage.getItem('nothing_calc_history') || '[]');
+        let undoStack = [''];
+
+        const calcInput = document.getElementById('calcInput');
+        const liveResult = document.getElementById('liveResult');
+        const statusBadge = document.getElementById('statusBadge');
+        const abcToggle = document.getElementById('abcToggle');
+        const glyphGlow = document.getElementById('glyphGlow');
+        const brandText = document.getElementById('brandText');
+
+        function openFractionModal() {
+            document.getElementById('fracModal').classList.add('open');
+            playSynthesizedSound('operator');
+        }
+
+        function closeFractionModal() {
+            document.getElementById('fracModal').classList.remove('open');
+        }
+
+        function confirmFractionStyle(style) {
+            fractionStyle = style;
+            localStorage.setItem('nothing_calc_frac_style', style);
+            closeFractionModal();
+            handleKey('/');
+        }
+
+        function switchMainTheme(themeName) {
+            mainTheme = themeName;
+            document.body.setAttribute('data-theme', themeName);
+            localStorage.setItem('nothing_calc_main_theme', themeName);
+
+            if (themeName === 'classic') brandText.innerText = "CLASSIC GLASS";
+            else if (themeName === 'modern') brandText.innerText = "HIGH-TECH CYBER";
+            else if (themeName === 'fullscreen') brandText.innerText = "FULL SCREEN";
+            playSynthesizedSound('operator');
+            setTimeout(resizeCanvas, 150);
+        }
+
+        const canvas = document.getElementById('particleCanvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+
+        function resizeCanvas() {
+            const rect = document.getElementById('displayArea').getBoundingClientRect();
+            canvas.width = rect.width;
+            canvas.height = rect.height;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        setTimeout(resizeCanvas, 100);
+
+        function setEffectPreset(val) {
+            selectedEffect = val;
+            localStorage.setItem('nothing_calc_fx', val);
+        }
+
+        function setSoundPreset(val) {
+            selectedSoundPreset = val;
+            localStorage.setItem('nothing_calc_sound_preset', val);
+            playSynthesizedSound('number');
+        }
+
+        class CustomEffectParticle {
+            constructor(x, y, fx, color) {
+                this.x = x;
+                this.y = y;
+                this.fx = fx;
+                this.color = color;
+                this.life = 1.0;
+                this.decay = 0.02 + Math.random() * 0.02;
+
+                if (fx === 'fireworks') {
+                    const angle = Math.random() * Math.PI * 2;
+                    const speed = Math.random() * 6 + 2;
+                    this.vx = Math.cos(angle) * speed;
+                    this.vy = Math.sin(angle) * speed;
+                    this.size = Math.random() * 3 + 1.5;
+                    this.gravity = 0.1;
+                } else if (fx === 'assembly') {
+                    this.x = x + (Math.random() * 120 - 60);
+                    this.y = y + (Math.random() * 120 - 60);
+                    this.targetX = x;
+                    this.targetY = y;
+                    this.speed = 0.08 + Math.random() * 0.05;
+                    this.size = 2.5;
+                } else if (fx === 'matrix') {
+                    this.x = Math.random() * canvas.width;
+                    this.y = 0;
+                    this.vy = Math.random() * 4 + 3;
+                    this.char = String.fromCharCode(0x30A0 + Math.floor(Math.random() * 96));
+                    this.color = '#00ff66';
+                    this.size = 14;
+                } else if (fx === 'pulsar' || fx === 'shockwave' || fx === 'echo') {
+                    this.radius = 1;
+                    this.growth = 3.5;
+                } else if (fx === 'grid') {
+                    this.x = (Math.floor(Math.random() * 10)) * (canvas.width / 10);
+                    this.y = 0;
+                    this.vy = 8;
+                    this.size = 2;
+                } else if (fx === 'confetti') {
+                    this.vx = Math.random() * 4 - 2;
+                    this.vy = Math.random() * -5 - 2;
+                    this.gravity = 0.2;
+                    this.w = Math.random() * 6 + 4;
+                    this.h = Math.random() * 8 + 4;
+                    this.rotation = Math.random() * Math.PI;
+                    this.color = `hsl(${Math.random() * 360}, 100%, 50%)`;
+                } else if (fx === 'bubbles') {
+                    this.vx = Math.random() * 1 - 0.5;
+                    this.vy = Math.random() * -2 - 1;
+                    this.size = Math.random() * 8 + 3;
+                } else if (fx === 'glitch') {
+                    this.w = Math.random() * 20 + 5;
+                    this.h = Math.random() * 8 + 2;
+                    this.x = x + (Math.random() * 40 - 20);
+                    this.y = y + (Math.random() * 20 - 10);
+                } else if (fx === 'vortex') {
+                    this.angle = Math.random() * Math.PI * 2;
+                    this.dist = Math.random() * 60 + 20;
+                    this.speed = 0.08;
+                    this.size = 2;
+                } else if (fx === 'fireflies') {
+                    this.vx = Math.random() * 2 - 1;
+                    this.vy = Math.random() * 2 - 1;
+                    this.size = Math.random() * 4 + 2;
+                    this.color = '#ffeb3b';
+                } else if (fx === 'digitalRain') {
+                    this.x = Math.random() * canvas.width;
+                    this.y = Math.random() * canvas.height;
+                    this.char = Math.floor(Math.random() * 10);
+                    this.size = 12;
+                } else if (fx === 'prism') {
+                    const a = Math.random() * Math.PI * 2;
+                    this.vx = Math.cos(a) * 4;
+                    this.vy = Math.sin(a) * 4;
+                    this.color = `hsl(${Math.random() * 360}, 100%, 60%)`;
+                    this.size = 3;
+                } else {
+                    const a = Math.random() * Math.PI * 2;
+                    const sp = Math.random() * 4 + 1;
+                    this.vx = Math.cos(a) * sp;
+                    this.vy = Math.sin(a) * sp;
+                    this.size = Math.random() * 3 + 1;
+                }
+            }
+
+            update() {
+                this.life -= this.decay;
+
+                if (this.fx === 'fireworks') {
+                    this.x += this.vx; this.y += this.vy; this.vy += this.gravity;
+                } else if (this.fx === 'assembly') {
+                    this.x += (this.targetX - this.x) * this.speed;
+                    this.y += (this.targetY - this.y) * this.speed;
+                } else if (this.fx === 'matrix' || this.fx === 'grid') {
+                    this.y += this.vy;
+                } else if (this.fx === 'pulsar' || this.fx === 'shockwave' || this.fx === 'echo') {
+                    this.radius += this.growth;
+                } else if (this.fx === 'confetti') {
+                    this.x += this.vx; this.y += this.vy; this.vy += this.gravity; this.rotation += 0.1;
+                } else if (this.fx === 'bubbles') {
+                    this.x += this.vx; this.y += this.vy;
+                } else if (this.fx === 'vortex') {
+                    this.angle += this.speed; this.dist *= 0.95;
+                    this.x = canvas.width - 30 + Math.cos(this.angle) * this.dist;
+                    this.y = canvas.height / 2 + Math.sin(this.angle) * this.dist;
+                } else {
+                    this.x += this.vx || 0; this.y += this.vy || 0;
+                }
+            }
+
+            draw() {
+                ctx.save();
+                ctx.globalAlpha = Math.max(0, this.life);
+
+                if (this.fx === 'matrix' || this.fx === 'digitalRain') {
+                    ctx.fillStyle = this.color;
+                    ctx.font = `${this.size}px monospace`;
+                    ctx.fillText(this.char, this.x, this.y);
+                } else if (this.fx === 'pulsar' || this.fx === 'shockwave' || this.fx === 'echo') {
+                    ctx.strokeStyle = this.color;
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                    ctx.stroke();
+                } else if (this.fx === 'strobe') {
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                } else if (this.fx === 'confetti') {
+                    ctx.fillStyle = this.color;
+                    ctx.translate(this.x, this.y);
+                    ctx.rotate(this.rotation);
+                    ctx.fillRect(-this.w / 2, -this.h / 2, this.w, this.h);
+                } else if (this.fx === 'glitch') {
+                    ctx.fillStyle = this.color;
+                    ctx.fillRect(this.x, this.y, this.w, this.h);
+                } else {
+                    ctx.fillStyle = this.color;
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.size || 2, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                ctx.restore();
+            }
+        }
+
+        function triggerEffectBurst() {
+            if (selectedEffect === 'none') return;
+            resizeCanvas();
+            const targetX = canvas.width - 30;
+            const targetY = canvas.height / 2;
+            const accentColor = getComputedStyle(document.documentElement).getPropertyValue('--accent-main').trim() || '#d71921';
+
+            const count = (selectedEffect === 'pulsar' || selectedEffect === 'shockwave' || selectedEffect === 'strobe') ? 2 : 22;
+            for (let i = 0; i < count; i++) {
+                particles.push(new CustomEffectParticle(targetX, targetY, selectedEffect, accentColor));
+            }
+        }
+
+        function animateParticles() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            for (let i = particles.length - 1; i >= 0; i--) {
+                particles[i].update();
+                particles[i].draw();
+                if (particles[i].life <= 0) particles.splice(i, 1);
+            }
+            requestAnimationFrame(animateParticles);
+        }
+        animateParticles();
+
+        /* AUDIO SYNTHESIS PRESETS */
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        function triggerGlow() {
+            glyphGlow.style.transform = `scale(${1 + Math.random() * 0.3}) translate(${Math.random() * 16 - 8}px, ${Math.random() * 16 - 8}px)`;
+            glyphGlow.style.opacity = "0.8";
+            setTimeout(() => { glyphGlow.style.opacity = "0.5"; }, 150);
+        }
+
+        function playSynthesizedSound(type) {
+            if ('vibrate' in navigator) { try { navigator.vibrate(10); } catch(e){} }
+            if (!audioEnabled) return;
+            try {
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+                const now = audioCtx.currentTime;
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain); gain.connect(audioCtx.destination);
+
+                if (selectedSoundPreset === 'retro') {
+                    osc.type = 'triangle'; osc.frequency.setValueAtTime(type === 'equals' ? 980 : 680, now);
+                } else if (selectedSoundPreset === 'glyph') {
+                    osc.type = 'sine'; osc.frequency.setValueAtTime(type === 'equals' ? 1200 : 800, now);
+                } else if (selectedSoundPreset === 'cyber') {
+                    osc.type = 'sawtooth'; osc.frequency.setValueAtTime(type === 'equals' ? 1500 : 400, now);
+                } else if (selectedSoundPreset === 'arcade') {
+                    osc.type = 'square'; osc.frequency.setValueAtTime(type === 'equals' ? 880 : 440, now);
+                } else {
+                    osc.type = 'sine'; osc.frequency.setValueAtTime(300, now);
+                }
+
+                gain.gain.setValueAtTime(0.08, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
+                osc.start(now); osc.stop(now + 0.04);
+            } catch (e) {}
+        }
+
+        function toggleAudio() {
+            audioEnabled = !audioEnabled;
+            localStorage.setItem('nothing_calc_sound', audioEnabled);
+            document.getElementById('soundIcon').className = audioEnabled ? 'fa-solid fa-volume-high' : 'fa-solid fa-volume-xmark opacity-40';
+        }
+
+        function toggleAbcMode() {
+            allowLetters = !allowLetters;
+            abcToggle.classList.toggle('active', allowLetters);
+            statusBadge.innerText = allowLetters ? "ALGEBRA (ABC)" : "RAW INPUT";
+            playSynthesizedSound('operator');
+        }
+
+        /* ALGEBRAIC EQUATION SOLVER (e.g. 40 X F = 80) */
+        function solveExpression(input) {
+            if (input.includes('=')) {
+                const parts = input.split('=');
+                if (parts.length === 2) {
+                    const left = parts[0].trim();
+                    const right = parts[1].trim();
+                    const varMatch = left.match(/[a-zA-Z]/) || right.match(/[a-zA-Z]/);
+
+                    if (varMatch) {
+                        const v = varMatch[0];
+                        const rightVal = evaluateRaw(right);
+                        let bestX = 0;
+                        let minDiff = Infinity;
+                        for (let x = -1000; x <= 1000; x += 0.1) {
+                            const testLeft = left.replace(new RegExp(v, 'g'), `(${x})`);
+                            const valLeft = evaluateRaw(testLeft);
+                            if (valLeft !== null) {
+                                const diff = Math.abs(valLeft - rightVal);
+                                if (diff < minDiff) {
+                                    minDiff = diff;
+                                    bestX = x;
+                                }
+                            }
+                        }
+                        if (minDiff < 0.01) {
+                            return `${v} = ${Math.round(bestX * 100) / 100}`;
+                        }
+                    }
+                }
+            }
+            return evaluateRaw(input);
+        }
+
+        function factorial(n) {
+            if (n < 0 || !Number.isInteger(n)) return NaN;
+            if (n === 0 || n === 1) return 1;
+            let res = 1;
+            for (let i = 2; i <= n; i++) res *= i;
+            return res;
+        }
+
+        function evaluateRaw(raw) {
+            if (!raw || !raw.trim()) return null;
+            let s = raw.replace(/×/g, '*').replace(/÷/g, '/');
+            s = s.replace(/(\d+)!/g, (m, n) => `factorial(${n})`);
+            s = s.replace(/\bpi\b/gi, Math.PI).replace(/\^/g, '**');
+
+            if (angleUnit === 'DEG') {
+                s = s.replace(/sin\(([^)]+)\)/g, (m, a) => `Math.sin((${a}) * Math.PI / 180)`);
+                s = s.replace(/cos\(([^)]+)\)/g, (m, a) => `Math.cos((${a}) * Math.PI / 180)`);
+                s = s.replace(/tan\(([^)]+)\)/g, (m, a) => `Math.tan((${a}) * Math.PI / 180)`);
+            } else {
+                s = s.replace(/sin\b/g, 'Math.sin').replace(/cos\b/g, 'Math.cos').replace(/tan\b/g, 'Math.tan');
+            }
+            s = s.replace(/sqrt\(/g, 'Math.sqrt(');
+
+            try {
+                const res = Function('factorial', `"use strict"; return (${s})`)(factorial);
+                return (typeof res === 'number' && !isNaN(res)) ? res : null;
+            } catch (e) {
+                return null;
+            }
+        }
+
+        function adjustResultFontSize(text) {
+            const len = text.length;
+            if (len > 25) {
+                liveResult.style.fontSize = '0.9rem';
+            } else if (len > 18) {
+                liveResult.style.fontSize = '1.1rem';
+            } else if (len > 12) {
+                liveResult.style.fontSize = '1.4rem';
+            } else if (len > 8) {
+                liveResult.style.fontSize = '1.75rem';
+            } else {
+                liveResult.style.fontSize = '2.25rem';
+            }
+        }
+
+        function renderFractionDisplay(text) {
+            if (fractionStyle === 'stacked' && text.includes('/')) {
+                const parts = text.split('/');
+                if (parts.length === 2 && parts[0].trim() && parts[1].trim()) {
+                    return `= <span class="frac-stacked"><span class="num">${parts[0].replace('=', '').trim()}</span><span class="den">${parts[1].trim()}</span></span>`;
+                }
+            }
+            return text;
+        }
+
+        function liveEvaluate() {
+            const raw = calcInput.value;
+            triggerGlow();
+            triggerEffectBurst();
+            if (!raw.trim()) {
+                liveResult.innerHTML = '= 0';
+                adjustResultFontSize('= 0');
+                return;
+            }
+
+            try {
+                const res = solveExpression(raw);
+                if (res !== null) {
+                    let textVal = '';
+                    if (typeof res === 'string') {
+                        textVal = `= ${res}`;
+                    } else {
+                        const formatted = Number.isInteger(res) ? res : parseFloat(res.toFixed(8));
+                        textVal = `= ${formatted}`;
+                    }
+                    liveResult.innerHTML = renderFractionDisplay(textVal);
+                    adjustResultFontSize(textVal);
+                } else {
+                    liveResult.innerHTML = '= ...';
+                    adjustResultFontSize('= ...');
+                }
+            } catch(e) {
+                liveResult.innerHTML = '= ...';
+                adjustResultFontSize('= ...');
+            }
+        }
+
+        function recordState() {
+            const current = calcInput.value;
+            if (undoStack[undoStack.length - 1] !== current) {
+                undoStack.push(current);
+                if (undoStack.length > 30) undoStack.shift();
+            }
+        }
+
+        function undo() {
+            if (undoStack.length > 1) {
+                undoStack.pop();
+                calcInput.value = undoStack[undoStack.length - 1];
+                playSynthesizedSound('undo');
+                liveEvaluate();
+            }
+        }
+
+        function toggleAdvMode() {
+            isAdvOpen = !isAdvOpen;
+            const drawer = document.getElementById('advDrawer');
+            if (isAdvOpen) {
+                drawer.style.maxHeight = '140px'; drawer.style.opacity = '1'; drawer.style.marginBottom = '8px';
+            } else {
+                drawer.style.maxHeight = '0px'; drawer.style.opacity = '0'; drawer.style.marginBottom = '0px';
+            }
+            playSynthesizedSound('operator');
+        }
+
+        function toggleThemeModal() {
+            document.getElementById('themeModal').classList.toggle('open');
+            playSynthesizedSound('operator');
+        }
+
+        function applyCustomColors() {
+            const fontName = document.getElementById('fontInput').value.trim();
+            if (fontName) {
+                const formattedFont = fontName.replace(/\s+/g, '+');
+                const link = document.createElement('link');
+                link.rel = 'stylesheet';
+                link.href = `https://fonts.googleapis.com/css2?family=${formattedFont}&display=swap`;
+                document.head.appendChild(link);
+                document.documentElement.style.setProperty('--font-main', `'${fontName}', monospace`);
+            }
+            document.documentElement.style.setProperty('--bg-gradient', document.getElementById('bgColorInput').value);
+            document.documentElement.style.setProperty('--accent-main', document.getElementById('accentColorInput').value);
+            document.documentElement.style.setProperty('--text-primary', document.getElementById('textColorInput').value);
+            document.documentElement.style.setProperty('--glass-bg', document.getElementById('glassColorInput').value + 'aa');
+            toggleThemeModal();
+        }
+
+        // KEYBOARD LISTENER
+        window.addEventListener('keydown', (e) => {
+            if (e.target.tagName === 'INPUT' && e.target !== calcInput) return;
+
+            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
+                e.preventDefault(); undo(); return;
+            }
+
+            if (e.key === 'Backspace') {
+                e.preventDefault();
+                playSynthesizedSound('undo');
+                calcInput.value = calcInput.value.slice(0, -1);
+                recordState(); liveEvaluate(); return;
+            }
+
+            if (e.key === 'Enter') {
+                e.preventDefault(); evaluateExpression(); return;
+            }
+
+            if (e.key === 'Escape') {
+                e.preventDefault(); handleKey('AC'); return;
+            }
+
+            let key = e.key;
+            if (key === '*') key = '×';
+            if (key === '/') {
+                e.preventDefault();
+                openFractionModal();
+                return;
+            }
+            if (key.toLowerCase() === 'x' && !allowLetters) key = '×';
+
+            if (/^[0-9\.\+\-\×\÷\=\(\)\%]$/.test(key)) {
+                e.preventDefault();
+                handleKey(key); return;
+            }
+
+            if (allowLetters && /^[a-zA-Z]$/.test(key)) {
+                e.preventDefault();
+                handleKey(key.toUpperCase());
+            }
+        });
+
+        // CENTRAL KEYPAD HANDLER
+        function handleKey(val) {
+            if (val === 'AC') {
+                playSynthesizedSound('clear');
+                calcInput.value = ''; recordState(); liveResult.innerHTML = '= 0';
+                adjustResultFontSize('= 0');
+            } else if (['+', '-', '×', '÷', '%', '^', '=', '/'].includes(val)) {
+                playSynthesizedSound('operator');
+                calcInput.value += val; recordState(); liveEvaluate();
+            } else {
+                playSynthesizedSound('number');
+                calcInput.value += val; recordState(); liveEvaluate();
+            }
+        }
+
+        function evaluateExpression() {
+            const raw = calcInput.value.trim();
+            if (!raw) return;
+            playSynthesizedSound('equals');
+            const res = solveExpression(raw);
+            if (res !== null) {
+                const finalStr = String(res);
+                saveToHistory(raw, finalStr);
+                calcInput.value = finalStr;
+                recordState(); liveEvaluate();
+            }
+        }
+
+        function saveToHistory(expr, res) {
+            history.unshift({ expr, res, timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) });
+            if (history.length > 20) history.pop();
+            localStorage.setItem('nothing_calc_history', JSON.stringify(history));
+            renderHistory();
+        }
+
+        function renderHistory() {
+            const historyList = document.getElementById('historyList');
+            if (history.length === 0) {
+                historyList.innerHTML = `<div class="text-xs calc-font opacity-40 italic text-center py-10">No history logged</div>`;
+                return;
+            }
+            historyList.innerHTML = history.map((item) => `
+                <div onclick="loadHistoryItem('${item.expr}')" class="p-3 rounded-2xl glass-btn cursor-pointer flex justify-between items-center text-xs calc-font">
+                    <div>
+                        <div class="opacity-50 text-[10px]">${item.timestamp}</div>
+                        <div class="font-bold">${item.expr}</div>
+                    </div>
+                    <div class="font-bold text-base" style="color: var(--accent-main);">${item.res}</div>
+                </div>
+            `).join('');
+        }
+
+        function loadHistoryItem(expr) {
+            calcInput.value = expr; recordState(); liveEvaluate(); toggleHistoryDrawer();
+        }
+
+        function clearHistory() {
+            history = []; localStorage.removeItem('nothing_calc_history'); renderHistory();
+        }
+
+        function toggleHistoryDrawer() {
+            document.getElementById('historyDrawer').classList.toggle('hidden'); renderHistory();
+        }
+
+        function toggleAngleUnit() {
+            angleUnit = angleUnit === 'DEG' ? 'RAD' : 'DEG';
+            document.getElementById('angleUnitBtn').innerText = angleUnit; liveEvaluate();
+        }
+
+        function copyToClipboard() {
+            const text = liveResult.innerText.replace('= ', '');
+            navigator.clipboard.writeText(text).then(() => {
+                const copyNotice = document.getElementById('copyNotice');
+                copyNotice.innerText = 'COPIED!';
+                setTimeout(() => copyNotice.innerText = 'COPY', 1200);
+            });
+        }
+
+        // Initialize presets
+        switchMainTheme(mainTheme);
+        document.getElementById('mainThemeSelect').value = mainTheme;
+        document.getElementById('effectSelect').value = selectedEffect;
+        document.getElementById('soundPresetSelect').value = selectedSoundPreset;
+    </script>
+</body>
+</html>
